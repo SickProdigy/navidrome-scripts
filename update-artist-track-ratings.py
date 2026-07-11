@@ -30,8 +30,9 @@ from dotenv import load_dotenv
 
 
 for stream in (sys.stdout, sys.stderr):
-    if hasattr(stream, "reconfigure"):
-        stream.reconfigure(errors="replace")
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(errors="replace")
 
 SUBSONIC_VERSION = "1.16.1"
 CLIENT_NAME = "navidrome-scripts"
@@ -220,7 +221,7 @@ def track_candidate(track: Dict[str, Any], from_rating: int, album_name: str = "
         except (TypeError, ValueError):
             pass
 
-    if rating != from_rating:
+    if rating is None or rating != from_rating:
         return None
 
     title = track.get("title") or track.get("name") or "<unknown>"
