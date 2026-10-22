@@ -8,10 +8,10 @@ Subsonic-compatible API.
 
 Usage examples:
   # Use values from .env (including ARTIST)
-  python update-artist-track-ratings.py --env-file .env --dry-run
+  navidrome-artist-ratings --env-file .env --dry-run
 
   # Override ARTIST from CLI
-  python update-artist-track-ratings.py --env-file .env --artist "Zippy Kid" --dry-run
+  navidrome-artist-ratings --env-file .env --artist "Zippy Kid" --dry-run
 """
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 from dotenv import load_dotenv
+from . import __version__
 
 
 for stream in (sys.stdout, sys.stderr):
@@ -36,7 +37,7 @@ for stream in (sys.stdout, sys.stderr):
 
 SUBSONIC_VERSION = "1.16.1"
 CLIENT_NAME = "navidrome-scripts"
-SCRIPT_VERSION = "v0.2.0"
+SCRIPT_VERSION = "v" + __version__
 REQUEST_TIMEOUTS = [10, 20, 30, 45, 60]
 RETRY_DELAYS = [3, 5, 10, 20, 30]
 
@@ -61,7 +62,7 @@ class CandidateTrack:
 def configure_logging(log_dir: str, log_level: str) -> Path:
     path = Path(log_dir)
     if not path.is_absolute():
-        path = Path(__file__).resolve().parent / path
+        path = Path.cwd() / path
     path.mkdir(parents=True, exist_ok=True)
 
     logfile = path / f"update-artist-track-ratings_{int(time.time())}.log"

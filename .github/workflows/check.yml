@@ -1,0 +1,54 @@
+name: Package checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build distributions
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Install wheel with test dependencies
+        run: |
+          python -m pip install "$(find dist -name '*.whl' -print -quit)[tags,test]"
+          python -m pip check
+      - name: Test installed package outside checkout
+        working-directory: ${{ runner.temp }}
+        run: python -B -m unittest discover -s "$GITHUB_WORKSPACE/tests"
+      - name: Check installed commands
+        working-directory: ${{ runner.temp }}
+        run: |
+          for command in artist-ratings library-review dates playlists unmapped maintenance duplicates guard renames tags; do
+            "navidrome-$command" --help >/dev/null
+          done
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and check container entry point
+        run: |
+          docker build --tag navidrome-scripts:check .
+          docker run --rm --network none navidrome-scripts:check --help
