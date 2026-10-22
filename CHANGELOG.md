@@ -1,5 +1,9 @@
 # Changes
 
+## 0.14.1 — 2026-10-22
+
+- Retry failed or interrupted library audits after one hour; successful audits retain the configured interval.
+
 ## 0.14.0 — 2026-10-22
 
 - Add reviewed indexed-duplicate cleanup through official Navidrome backups/remap, with explicit library roots and alternate-encode approval, all-user reference checks and retained quarantine/recovery files.

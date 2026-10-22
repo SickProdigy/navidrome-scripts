@@ -141,6 +141,21 @@ class MaintenanceTests(unittest.TestCase):
         self.client.get = Mock(side_effect=AssertionError('should not fetch again'))
         self.assertEqual(m.audit(self.client, self.root, self.state, clock=lambda: 100100), 0)
 
+    def test_failed_or_interrupted_audit_retries_after_one_hour(self):
+        for status in ('failed', 'running'):
+            with self.subTest(status=status):
+                marker = self.state / 'audit-status.json'
+                self.state.mkdir(parents=True, exist_ok=True)
+                marker.write_text(json.dumps(dict(server=self.client.url, root=str(self.root.resolve()),
+                    remote_root='/music', attempt=100000, status=status)))
+                original = self.client.get
+                self.client.get = Mock(side_effect=ApiError('still offline'))
+                self.assertEqual(m.audit(self.client, self.root, self.state, clock=lambda: 103599), 0)
+                self.client.get.assert_not_called()
+                self.client.get = original
+                self.assertEqual(m.audit(self.client, self.root, self.state, clock=lambda: 103600), 0)
+                self.assertIn(json.loads(marker.read_text())['status'], ('complete', 'complete_with_errors'))
+
     def test_failed_audit_retains_failure_and_does_not_repeat_every_minute(self):
         self.client.get = Mock(side_effect=ApiError('offline'))
         with self.assertRaises(ApiError):

@@ -254,7 +254,10 @@ def audit(client, root, state, days=7, include_dates=False, clock=time.time,remo
     with library_lock(state):
         marker = state / 'audit-status.json'
         previous = json.loads(marker.read_text(encoding='utf8')) if marker.exists() else {}
-        if previous.get('server') == client.url and previous.get('root') == str(root.resolve()) and previous.get('remote_root','/music')==remote_root and clock() - previous.get('attempt', 0) < days * 86400:
+        # Failed or interrupted attempts get a bounded retry, not a week-long
+        # successful-audit interval. Preserve the original failure for diagnosis.
+        interval = days * 86400 if previous.get('status') in ('complete', 'complete_with_errors') else 3600
+        if previous.get('server') == client.url and previous.get('root') == str(root.resolve()) and previous.get('remote_root','/music')==remote_root and clock() - previous.get('attempt', 0) < interval:
             return 0
         started = clock()
         record = dict(attempt=started, started=dates.utc(), status='running', server=client.url, root=str(root.resolve()),remote_root=remote_root)
