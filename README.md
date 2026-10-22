@@ -31,7 +31,7 @@ Filesystem checks also use Navidrome's native API with the same credentials;
 the base URL must expose `/auth` and `/api`, as well as `/rest`.
 For automation such as arr-scripts, install a released package version and invoke
 its console command; this package does not depend on the other music helpers.
-It has not been published to PyPI yet.
+Install the published package with `pip install 'navidrome-scripts[tags]==0.14.0'`.
 
 ## Artist track ratings
 
